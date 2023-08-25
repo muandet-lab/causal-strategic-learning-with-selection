@@ -1,7 +1,7 @@
 # Code for the project  "Causal Strategic Learning with Competitive Selection"
 
 <p align="center">
-<image src="https://github.com/muandet-lab/causal-strategic-learning-with-selection/blob/master/csl-diagram.pdf"/>
+<image src="https://github.com/muandet-lab/causal-strategic-learning-with-selection/blob/master/csl-diagram-1.png"/>
 </p>
 
 
