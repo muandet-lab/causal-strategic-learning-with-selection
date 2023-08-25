@@ -1,5 +1,10 @@
 # Code for the project  "Causal Strategic Learning with Competitive Selection"
 
+<p align="center">
+<img src="https://github.com/muandet-lab/causal-strategic-learning-with-selection/blob/master/csl-diagram.pdf" alt="figure" width="600"/>
+</p>
+
+
 
 To instantiate the project environment:
 ```
