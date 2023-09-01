@@ -32,20 +32,47 @@ def get_args(cmd):
     )
     parser.add_argument("--fixed-effort-conversion", action="store_true")
     parser.add_argument(
-        "--scaled-duplicates", default=None, choices=["sequence", None], type=str
+        "--scaled-duplicates",
+        default=None,
+        choices=["sequence", None],
+        type=str,
+        help="whether to deploy scaled duplicates for each selection parameter "
+        "(i.e. our settings) or not (original harris et. al settings).",
     )
-    parser.add_argument("--num-cooperative-envs", default=None, type=int)
-    parser.add_argument("--clip", action="store_true")
-    parser.add_argument("--normalize", action="store_true")
-    parser.add_argument("--theta-star-std", type=float, default=0)
+    parser.add_argument(
+        "--num-cooperative-envs",
+        default=None,
+        type=int,
+        help="number of environments with shared frequency of how often to "
+        "deploy scaled duplicates",
+    )
+    parser.add_argument(
+        "--clip", action="store_true", help="clip, as in Harris. et al settings."
+    )
+    parser.add_argument(
+        "--normalize",
+        action="store_true",
+        help="normalise features to retain real-world interpretation",
+    )
+    parser.add_argument(
+        "--theta-star-std",
+        type=float,
+        default=0,
+        help="standard deviation of causal coefficient. 0 ensures identical causal coefficients of each env",
+    )
     parser.add_argument(
         "--rank-type", type=str, default="prediction", choices=("prediction", "uniform")
     )
-    parser.add_argument("--utility-dataset-std", type=float, default=2)
 
     # multienv
     parser.add_argument("--num-envs", default=1, type=int)
-    parser.add_argument("--envs-accept-rates", nargs="+", default=[1.00], type=float)
+    parser.add_argument(
+        "--envs-accept-rates",
+        nargs="+",
+        default=[1.00],
+        type=float,
+        help="acceptance rate of each env.",
+    )
     parser.add_argument("--pref-vect", nargs="+", default=[1.00], type=float)
 
     # algorithm
@@ -427,7 +454,7 @@ def runs2df(runs: list):
         a pandas DataFrame.
 
     Returns:
-        df (pd.DataFrame): Pandas Dataframe. 
+        df (pd.DataFrame): Pandas Dataframe.
     """
     dfs = []
     for r in runs:
