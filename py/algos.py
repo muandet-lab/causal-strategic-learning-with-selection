@@ -88,14 +88,39 @@ for i in (1, 0):
 
 
 # %%
-def ols(x, y):
+def ols(x: np.ndarray, y: np.ndarray):
+    """Applies OLS for causal param. estimation.
+
+    Args:
+        x (np.ndarray): (T, m) matrix of covariates
+        y (np.ndarray): (*,) dimensional vector containing college GPAs
+        of students enrolled in an env.
+
+    Returns:
+        theta_hat_ols (np.ndarray): (m,) dimensional vector. Estimated
+        causal param. by OLS.
+    """
     model = LinearRegression(fit_intercept=True)
     model.fit(x, y)
     theta_hat_ols_ = model.coef_
     return theta_hat_ols_
 
 
-def tsls(x, y, theta, pref_vect):  # runs until round T
+def tsls(
+    x: np.ndarray, y: np.ndarray, theta: np.ndarray, pref_vect: np.ndarray
+):  # runs until round T
+    """Applies 2SLS method (Harris et. al) for causal parameter estimation.
+
+    Args:
+        x (np.ndarray): (T, m) matrix of covariates.
+        y (np.ndarray): (*,) dimensional vector containing college GPAs of
+        students enrolled in an env.
+        theta (np.ndarray): (T, m) matrix. deployed selection parameters.
+        pref_vect (np.ndarray): (n) dimensional vector. Preference vector.
+
+    Returns:
+        theta_hat_tsls (np.ndarray): estimated causal parameter by 2SLS algorithm.
+    """
     # regress x onto theta: estimate omega
     model = LinearRegression()
 
@@ -116,7 +141,21 @@ def tsls(x, y, theta, pref_vect):  # runs until round T
     return theta_hat_tsls_
 
 
-def our(x, y, theta, w):
+def our(x: np.ndarray, y: np.ndarray, theta: np.ndarray, w: np.ndarray):
+    """Applies our proposed method for causal parameter estimation.
+
+    Args:
+        x (np.ndarray): (T, m) matrix of covariates.
+        y (np.ndarray): (*,) dimensional vector containing college GPAs of
+        students enrolled in an env.
+        theta (np.ndarray): (T, m) matrix. deployed selection parameters.
+        w (np.ndarray): (T,) dimensional binary vector. Denotes whether a
+        corresponding student is enrolled at the college or not.
+
+    Returns:
+        theta_star_est (np.ndarray): (m,) dimensional vector. Estimated
+        causal parameter.
+    """
     model = LinearRegression()
     model.fit(theta, x)
 
@@ -178,7 +217,22 @@ def our(x, y, theta, w):
     return theta_star_est
 
 
-def run_multi_env_utility(args, seed, test_theta_envs):
+def run_multi_env_utility(args: argparse.Namespace, seed: int, theta_types: list):
+    """calls run_multi_env() function (i.e. generates data, and estimates causal
+    parameters) and then deploys a theta, depending on theta_type, and computes the
+    utility for each environment.
+
+    Args:
+        args (argparse.Namespace): namespace object for arguments.
+        seed (int): for reproducibility.
+        theta_types (list): list of strings containing theta_type.
+
+    Returns:
+        utilities (np.ndarray): (n,) dimensional vector. Contains utility of
+        each environment.
+        test_thetas (np.ndarray) (1, n, m) matrix. contains deployed thetas
+        for each env.
+    """
     err_list, est_list, _, data_dict = run_multi_env(
         seed, args, env_idx=None, fixed_competitors=True
     )
@@ -197,7 +251,7 @@ def run_multi_env_utility(args, seed, test_theta_envs):
     # recovering test thetas.
     test_thetas = np.zeros(shape=(args.num_envs, 2))
     for env_idx in range(args.num_envs):
-        theta_type = test_theta_envs[env_idx]
+        theta_type = theta_types[env_idx]
         test_thetas[env_idx] = recover_thetas(
             args.num_applicants,
             args.applicants_per_round,
@@ -230,9 +284,34 @@ def run_multi_env_utility(args, seed, test_theta_envs):
     return utilities, test_thetas
 
 
-def run_multi_env(seed: int, args:argparse.Namespace, env_idx:int=None, fixed_competitors:bool=False):
+def run_multi_env(
+    seed: int,
+    args: argparse.Namespace,
+    env_idx: int = None,
+    fixed_competitors: bool = False,
+):
+    """Generates a dataset, and run causal parameter estimation methods.
+
+    Args:
+        seed (int): seed to ensure reproducibility.
+        args (argparse.Namespace): arguments object.
+        env_idx (int, optional): If given, run the algorithm for only env_idx env.
+                                Defaults to None.
+        fixed_competitors (bool, optional): Whether to fix deployment
+                                             rules of other environments to a
+                                             fixed value. Required for estimating
+        theta_ao for utility maximisation. Defaults to False.
+
+    Returns:
+        err_list (dict): key is method x env_idx. Value is a list containing
+                         estimation error over iterations.
+        est_list (dict): key is (method x env_idx). Value is a list containing
+                         estimated causal parameters over iterations.
+        z (np.ndarray). (T,) vector. compliance of each student.
+        data_dict (dict). Keys are ['theta_star', 'theta', 'z', 'y'].
+    """
     np.random.seed(seed)
-    _, x, y, _, theta, _, z, _, _, _, _, theta_star= data_gen.generate_data(
+    _, x, y, _, theta, _, z, _, _, _, _, theta_star = data_gen.generate_data(
         args.num_applicants,
         args.applicants_per_round,
         args.fixed_effort_conversion,
@@ -255,7 +334,34 @@ def run_multi_env(seed: int, args:argparse.Namespace, env_idx:int=None, fixed_co
     return err_list, est_list, z, data_dict
 
 
-def run_single_env(args, x, y, theta, z, theta_star, env_idx, pref_vect):
+def run_single_env(
+    args: argparse.Namespace,
+    x: np.ndarray,
+    y: np.ndarray,
+    theta: np.ndarray,
+    z: np.ndarray,
+    theta_star: np.ndarray,
+    env_idx: int,
+    pref_vect: np.ndarray,
+):
+    """Runs each method for causal parameter estimation for a particular environment.
+
+    Args:
+        args (argparse.Namespace): namespace object containing arguments.
+        x (np.ndarray): (T, m) matrix. covariates of students.
+        y (np.ndarray): (n, T) matrix. college GPA of students.
+        theta (np.ndarray): (n, T, m) matrix. deployed selection parameters.
+        z (np.ndarray): (T,) dimensional vector. Contains compliance of each student.
+        theta_star (np.ndarray): (n, m) matrix. ground truth causal coefficients.
+        env_idx (int): index of environment for which to estimate causal param..
+        pref_vect (np.ndarray): (n,) dimensional vector of preference.
+
+    Returns:
+        err_list (dict): key is method name. value is a list containing causal
+                        estimation errors over iterations.
+        est_list (dict): key is method name. value is a list containing estimated
+                        casual coefficients over iterations.
+    """
     # extracting relevant variables for the environment i.
     y_env = y[env_idx].flatten()
     theta_env = theta[env_idx]
@@ -272,24 +378,6 @@ def run_single_env(args, x, y, theta, z, theta_star, env_idx, pref_vect):
     if args.offline_eval:
         upp_limits = [args.num_applicants]
 
-    err_list, est_list = estimate_causal_params(
-        args,
-        x,
-        theta,
-        theta_star,
-        env_idx,
-        pref_vect,
-        y_env,
-        theta_env,
-        z_env,
-        upp_limits,
-    )
-    return err_list, est_list
-
-
-def estimate_causal_params(
-    args, x, theta, theta_star, env_idx, pref_vect, y_env, theta_env, z_env, upp_limits
-):
     err_list = {m: [None] * len(upp_limits) for m in args.methods}
     est_list = {m: [None] * len(upp_limits) for m in args.methods}
     for i, t in tqdm(enumerate(upp_limits)):
@@ -326,17 +414,20 @@ def estimate_causal_params(
             err_list[m][i] = np.linalg.norm(theta_star[env_idx] - est)
             est_list[m][i] = est
 
-    return err_list, est_list  # , model.coef_.T
+    return err_list, est_list
 
 
 # convert to dataframe.
-def runs2df(runs):
-    """
+def runs2df(runs: list):
+    """Converts a list of dictionaries to a dataframe.
+
     Args:
-    runs: List of dictionaries
+        runs (list): each entry is a dictionary. The dictionaries
+        have identical keys, due to which it can be transformed into
+        a pandas DataFrame.
 
     Returns:
-    Converts to list of dataframes and concatenate those together.
+        df (pd.DataFrame): Pandas Dataframe. 
     """
     dfs = []
     for r in runs:

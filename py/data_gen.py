@@ -1,6 +1,5 @@
 # %%
 import argparse
-from typing import Tuple
 import numpy as np
 from py.decisions import ThetaGenerator, Simulator
 
@@ -35,16 +34,16 @@ def generate_data(
 
     Returns (all following variables are of type np.ndarray):
         b_tr: (T, m) matrix. Baseline vector of students.
-        x_tr: (T, m) matrix. Improved vector of students. 
-        y: (n, m) matrix. College GPA of each student for each environment. 
+        x_tr: (T, m) matrix. Improved vector of students.
+        y: (n, T) matrix. College GPA of each student for each environment.
         eet_mean: (m, m) matrix. mean of effort conversion matrix,
         theta: (n, T, m) matrix. deployed selection parameters
         w: (n, T) matrix. w[i, j] denotes with student j got an offer from college i.
-        z: (T, ) vector. 
+        z: (T, ) vector.
         y_hat: (n, T) predicted college GPA of each student for each uni.
-        adv_idx: 1D vector. Contains indices of advantaged students. 
-        disadv_idx, 1D vector. Contains indices of disadvantaged students. 
-        o: (n, T) matrix. Exogeneous noise. 
+        adv_idx: 1D vector. Contains indices of advantaged students.
+        disadv_idx, 1D vector. Contains indices of disadvantaged students.
+        o: (n, T) matrix. Exogeneous noise.
         theta_star: (n, m) matrix. ground truth theta for each uni.
     """
     # pt. 1. ground truth causal parameters.
@@ -96,7 +95,7 @@ def generate_data(
         adv_idx,
         disadv_idx,
         o.T,
-        theta_star
+        theta_star,
     )
 
 

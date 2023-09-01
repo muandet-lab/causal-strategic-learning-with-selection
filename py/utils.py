@@ -18,35 +18,44 @@ def normalize(arrs: list, new_min: float, new_max: float) -> Tuple[List[float], 
 
 
 def recover_thetas(
-    num_applicants, applicants_per_round, y, theta, z, env_idx, est_list, test_theta
+    num_applicants: int,
+    applicants_per_round: int,
+    y: np.ndarray,
+    theta: np.ndarray,
+    z: np.ndarray,
+    env_idx: int,
+    est_list: dict,
+    theta_type: str,
 ):
-    """having inferred the theta_star and theta_ols, this function returns either theta_star, theta_ols,
-    or theta_ols. Note that all returned vectors are normalized.
+    """Having estimated theta_star, returns a theta, depending on theta_type, 
+    for environment env_idx. 
 
     Args:
-        num_applicants (int):
-        applicants_per_round (int):
-        y (np.ndarray):
-        theta (np.ndarray):
-        z (np.ndarray):
-        env_idx (int):
-        est_list (dict):
-        test_theta (np.ndarray):
+        num_applicants (int): number of applicants
+        applicants_per_round (int): applicants per round
+        y (np.ndarray): (n, T) matrix. 
+        theta (np.ndarray): (n, T, m) matrix. 
+        z (np.ndarray): (T,) dimensional vector. 
+        env_idx (int): index of environment for which to recover the theta to deploy.
+        est_list (dict): key is (method * env_idx). value is a list containing 
+        estimated causal parameter over iterations. 
+        theta_type (str): type of theta to deploy. 
 
     Returns:
-        theta_star, theta_ao, or theta_ols (np.ndarray)
+        theta_star, theta_ao, or theta_ols (np.ndarray): (m,) dimensional vector. 
+        The vector to deploy for future students. 
     """
-    assert test_theta in ("theta_star_hat", "theta_ols_hat", "theta_ao_hat")
+    assert theta_type in ("theta_star_hat", "theta_ols_hat", "theta_ao_hat")
 
     # compute theta star norm
     theta_star_est = est_list[f"ours_env{env_idx}"][-1]
     theta_star_est_norm = np.linalg.norm(theta_star_est)
 
-    if test_theta == "theta_star_hat":
+    if theta_type == "theta_star_hat":
         theta_star_est = est_list[f"ours_env{env_idx}"][-1]
         return theta_star_est
 
-    elif test_theta == "theta_ols_hat":
+    elif theta_type == "theta_ols_hat":
         theta_ols = est_list[f"ols_env{env_idx}"][-1]
         theta_ols_norm = np.linalg.norm(theta_ols)
 
@@ -58,7 +67,7 @@ def recover_thetas(
             )  # same magnitude as theta_star_hat
         return theta_ols
 
-    elif test_theta == "theta_ao_hat":
+    elif theta_type == "theta_ao_hat":
         # recovering theta_ao
         theta_ao_target, theta_ao_input = [], []
         n_rounds = num_applicants / applicants_per_round
