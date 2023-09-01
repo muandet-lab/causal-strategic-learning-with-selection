@@ -12,8 +12,6 @@ from tqdm import tqdm
 from py.utils import recover_thetas
 from py.data_gen import run_simulator
 
-# for notebook.
-
 
 def get_git_revision_hash() -> str:
     return (
@@ -98,7 +96,6 @@ def ols(x, y):
 
 
 def tsls(x, y, theta, pref_vect):  # runs until round T
-    # my implementation
     # regress x onto theta: estimate omega
     model = LinearRegression()
 
@@ -233,7 +230,7 @@ def run_multi_env_utility(args, seed, test_theta_envs):
     return utilities, test_thetas
 
 
-def run_multi_env(seed, args, env_idx=None, fixed_competitors=False):
+def run_multi_env(seed: int, args:argparse.Namespace, env_idx:int=None, fixed_competitors:bool=False):
     np.random.seed(seed)
     _, x, y, _, theta, _, z, _, _, _, _, theta_star, pref_vect = data_gen.generate_data(
         args.num_applicants,
