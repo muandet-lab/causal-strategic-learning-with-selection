@@ -232,7 +232,7 @@ def run_multi_env_utility(args, seed, test_theta_envs):
 
 def run_multi_env(seed: int, args:argparse.Namespace, env_idx:int=None, fixed_competitors:bool=False):
     np.random.seed(seed)
-    _, x, y, _, theta, _, z, _, _, _, _, theta_star, pref_vect = data_gen.generate_data(
+    _, x, y, _, theta, _, z, _, _, _, _, theta_star= data_gen.generate_data(
         args.num_applicants,
         args.applicants_per_round,
         args.fixed_effort_conversion,
@@ -245,7 +245,7 @@ def run_multi_env(seed: int, args:argparse.Namespace, env_idx:int=None, fixed_co
     envs_itr = [env_idx] if env_idx is not None else range(args.num_envs)
     for env_idx in envs_itr:
         dictenv_err, dictenv_est = run_single_env(
-            args, x, y, theta, z, theta_star, env_idx, pref_vect
+            args, x, y, theta, z, theta_star, env_idx, args.pref_vect
         )
         for k, v in dictenv_err.items():
             err_list[f"{k}_env{env_idx}"] = v

@@ -14,39 +14,38 @@ def generate_data(
     _theta: np.ndarray = None,
     _theta_star=None,
     fixed_competitors=False,
-) -> Tuple[
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-    np.ndarray,
-]:
+):
     """generates data by first generating theta, theta_star and then running the simulator.
 
     Args:
         num_applicants (int): number of applicants
         applicants_per_round (int): number of applicants in each round
         fixed_effort_conversion (bool): whether to use the same effort conversion
-                                        matrix for each student.
+        matrix for each student.
         args (argparse.Namespace): namespace object from algos.py
         _theta (np.ndarray, optional): (T, n, m) matrix. deployment rules to use for each student.
-                                        If given, uses that instead of generating
-                                        a new one. Defaults to None.
-        _theta_star (_type_, optional): (n, m) matrix. theta_star ground truth theta for use
-                                        for each university.
-                                        If given, uses that instead of generating a new
-                                        one. Defaults to None.
+        If given, uses that instead of generating
+        a new one. Defaults to None.
+        _theta_star (np.ndarray, optional): (n, m) matrix. ground truth theta for each university.
+        If given, uses that instead of generating a new
+        one. Defaults to None.
         fixed_competitors (bool, optional): whether to fix the competiting environments
-                                            to use the same deployment rule. Used for
-                                            computing theta_ao. Defaults to False.
+        to use the same deployment rule. Used for
+        computing theta_ao. Defaults to False.
+
+    Returns (all following variables are of type np.ndarray):
+        b_tr: (T, m) matrix. Baseline vector of students.
+        x_tr: (T, m) matrix. Improved vector of students. 
+        y: (n, m) matrix. College GPA of each student for each environment. 
+        eet_mean: (m, m) matrix. mean of effort conversion matrix,
+        theta: (n, T, m) matrix. deployed selection parameters
+        w: (n, T) matrix. w[i, j] denotes with student j got an offer from college i.
+        z: (T, ) vector. 
+        y_hat: (n, T) predicted college GPA of each student for each uni.
+        adv_idx: 1D vector. Contains indices of advantaged students. 
+        disadv_idx, 1D vector. Contains indices of disadvantaged students. 
+        o: (n, T) matrix. Exogeneous noise. 
+        theta_star: (n, m) matrix. ground truth theta for each uni.
     """
     # pt. 1. ground truth causal parameters.
     if _theta_star is None:  # distribute randomly
@@ -97,8 +96,7 @@ def generate_data(
         adv_idx,
         disadv_idx,
         o.T,
-        theta_star,
-        args.pref_vect,
+        theta_star
     )
 
 
