@@ -20,17 +20,17 @@ def generate_data(
         num_applicants (int): number of applicants
         applicants_per_round (int): number of applicants in each round
         fixed_effort_conversion (bool): whether to use the same effort conversion
-        matrix for each student.
+                                        matrix for each student.
         args (argparse.Namespace): namespace object from algos.py
         _theta (np.ndarray, optional): (T, n, m) matrix. deployment rules to use for each student.
-        If given, uses that instead of generating
-        a new one. Defaults to None.
+                                        If given, uses that instead of generating
+                                        a new one. Defaults to None.
         _theta_star (np.ndarray, optional): (n, m) matrix. ground truth theta for each university.
-        If given, uses that instead of generating a new
-        one. Defaults to None.
+                                            If given, uses that instead of generating a new
+                                            one. Defaults to None.
         fixed_competitors (bool, optional): whether to fix the competiting environments
-        to use the same deployment rule. Used for
-        computing theta_ao. Defaults to False.
+                                            to use the same deployment rule. Used for
+                                            computing theta_ao. Defaults to False.
 
     Returns (all following variables are of type np.ndarray):
         b_tr: (T, m) matrix. Baseline vector of students.
