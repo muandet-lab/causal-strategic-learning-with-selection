@@ -16,7 +16,7 @@ from sklearn.preprocessing import normalize as skl_normalize
 from py.utils import normalize
 
 
-def clip_covariates(x_tr: np.ndarray) -> np.ndarray:
+def clip_covariates(x_tr: np.ndarray, alpha: float = 0) -> np.ndarray:
     """
     This works for both base covariates (i.e., b) and improved covariates (i.e., X).
 
@@ -27,13 +27,24 @@ def clip_covariates(x_tr: np.ndarray) -> np.ndarray:
       np.ndarray: a (T,m) matrix of clipped covariates.
     """
     x_tr = copy.deepcopy(x_tr)
-    x_tr[:, 0] = np.clip(x_tr[:, 0], 400, 1600)  # clip to 400 to 1600
-    x_tr[:, 1] = np.clip(x_tr[:, 1], 0, 4)  # clip to 0 to 4.0
+
+    x_tr[:, 0] = np.clip(
+        x_tr[:, 0],
+        alpha * 400 + (1 - alpha) * x_tr[:, 0].min(),
+        alpha * 1600 + (1 - alpha) * x_tr[:, 0].max(),
+    )  # clip to 400 to 1600
+    x_tr[:, 1] = np.clip(
+        x_tr[:, 1],
+        alpha * 0 + (1 - alpha) * x_tr[:, 1].min(),
+        4 * alpha + (1 - alpha) * x_tr[:, 1].max(),
+    )  # clip to 0 to 4.0
     return x_tr
 
 
-def clip_outcomes(y: np.ndarray):
-    return np.clip(y, 0, 4)  # GPA
+def clip_outcomes(y: np.ndarray, alpha: float = 0):
+    return np.clip(
+        y, 0 * alpha + (1 - alpha) * y.min(), 4 * alpha + (1 - alpha) * y.max()
+    )  # GPA
 
 
 def normalise_agents(
@@ -143,7 +154,6 @@ class AgentsGenericModel:
         group_1_outcome_mean_shift: float,
         group_1_outcome_std: float,
     ):
-
         # np.random.multivariate_normal
         self.b_dis_0 = {"mean": group_0_base_mean, "cov": group_0_base_cov}
         self.b_dis_1 = {"mean": group_1_base_mean, "cov": group_1_base_cov}
@@ -293,9 +303,9 @@ class AgentsGenericModel:
 
 DEFAULT_AGENTS_MODEL = AgentsGenericModel(
     group_0_base_mean=[800, 1.8],
-    group_0_base_cov=[[200 ** 2, 0], [0, 0.5 ** 2]],
+    group_0_base_cov=[[200**2, 0], [0, 0.5**2]],
     group_1_base_mean=[1000, 2.25],
-    group_1_base_cov=[[200 ** 2, 0], [0, 0.5 ** 2]],
+    group_1_base_cov=[[200**2, 0], [0, 0.5**2]],
     group_0_outcome_mean_shift=0.5,
     group_0_outcome_std=0.2,
     group_1_outcome_mean_shift=1.5,

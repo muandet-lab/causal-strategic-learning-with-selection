@@ -50,6 +50,12 @@ def get_args(cmd):
         "--clip", action="store_true", help="clip, as in Harris. et al settings."
     )
     parser.add_argument(
+        "--alpha",
+        default=0,
+        type=float,
+        help="convex combination for deciding clipping thres.",
+    )
+    parser.add_argument(
         "--normalize",
         action="store_true",
         help="normalise features to retain real-world interpretation",

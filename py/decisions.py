@@ -147,12 +147,13 @@ class Simulator:
         does_normalise: bool,
         ranking_type: str,
         agents_model: AgentsGenericModel = DEFAULT_AGENTS_MODEL,
+        alpha: float = 0,
     ):
-
         self._num_agents = num_agents  # per round
         self._has_same_effort = has_same_effort
         self._does_clip = does_clip
         self._does_normalise = does_normalise
+        self.alpha = alpha
 
         self._agents_model = agents_model
 
@@ -208,7 +209,7 @@ class Simulator:
         u, b_tr, e_stack = am.gen_base_agents(
             length=(T * s), has_same_effort=has_same_effort
         )
-        b_tr = clip_covariates(b_tr) if does_clip else b_tr
+        b_tr = clip_covariates(b_tr, self.alpha) if does_clip else b_tr
 
         # compute average thetas
         # (n,) and (n,T,m) -> (T,m)
@@ -226,7 +227,7 @@ class Simulator:
 
         # agents take strategic actions
         x_tr = am.gen_covariates(b_tr=b_tr, e_stack=e_stack, avg_theta_tr=avg_theta_tr)
-        x_tr = clip_covariates(x_tr) if does_clip else x_tr
+        x_tr = clip_covariates(x_tr, self.alpha) if does_clip else x_tr
 
         # normalise agents' data
         e_mean = e_stack.mean(axis=0)
@@ -287,7 +288,7 @@ class Simulator:
 
         # start here
         o, y = am.gen_outcomes(u=u, x_tr=x_tr, theta_stars_tr=theta_stars_tr)
-        y = clip_outcomes(y) if does_clip else y
+        y = clip_outcomes(y, self.alpha) if does_clip else y
 
         # assignment
         self.o = o
