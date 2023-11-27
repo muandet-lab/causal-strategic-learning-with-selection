@@ -56,6 +56,12 @@ def get_args(cmd):
         help="convex combination for deciding clipping thres.",
     )
     parser.add_argument(
+        "--alpha-effort",
+        default=1,
+        type=float,
+        help="convex combination for deciding mean and variance of added noise effort conversion matrix.",
+    )
+    parser.add_argument(
         "--normalize",
         action="store_true",
         help="normalise features to retain real-world interpretation",

@@ -148,12 +148,14 @@ class Simulator:
         ranking_type: str,
         agents_model: AgentsGenericModel = DEFAULT_AGENTS_MODEL,
         alpha: float = 0,
+        alpha_effort: float=1
     ):
         self._num_agents = num_agents  # per round
         self._has_same_effort = has_same_effort
         self._does_clip = does_clip
         self._does_normalise = does_normalise
         self.alpha = alpha
+        self.alpha_effort = alpha_effort
 
         self._agents_model = agents_model
 
@@ -207,7 +209,7 @@ class Simulator:
 
         # agents are spawned
         u, b_tr, e_stack = am.gen_base_agents(
-            length=(T * s), has_same_effort=has_same_effort
+            length=(T * s), has_same_effort=has_same_effort, alpha_effort=self.alpha_effort
         )
         b_tr = clip_covariates(b_tr, self.alpha) if does_clip else b_tr
 

@@ -165,7 +165,7 @@ class AgentsGenericModel:
         return
 
     def gen_base_agents(
-        self, length: int, has_same_effort: bool
+        self, length: int, has_same_effort: bool, alpha_effort: float = 1
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Args:
@@ -193,8 +193,16 @@ class AgentsGenericModel:
         bottom_noise = np.zeros(T)
         if not has_same_effort:
             multipliers = (u - 0.5) * 2
-            top_noise = multipliers * np.random.normal(loc=0.5, scale=0.5, size=T)
-            bottom_noise = multipliers * np.random.normal(loc=0.1, scale=0.1, size=T)
+            top_noise = multipliers * np.random.normal(
+                loc=alpha_effort * 0.5 + (1 - alpha_effort) * 0,
+                scale=alpha_effort * 0.5 + (1 - alpha_effort) * 0,
+                size=T,
+            )
+            bottom_noise = multipliers * np.random.normal(
+                loc=alpha_effort * 0.1 + (1 - alpha_effort) * 0,
+                scale=alpha_effort * 0.1 + (1 - alpha_effort) * 0,
+                size=T,
+            )
 
         e_stack = np.tile([[10.0, 0], [0, 1.0]], reps=(T, 1, 1))
         e_stack[:, 0, 0] += top_noise

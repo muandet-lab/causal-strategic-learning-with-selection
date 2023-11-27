@@ -123,6 +123,7 @@ def run_simulator(
         does_normalise=args.normalize,
         ranking_type=args.rank_type,
         alpha=args.alpha,
+        alpha_effort=args.alpha_effort
     )
     sim.deploy(
         thetas_tr=theta, gammas=args.pref_vect, admission_rates=args.envs_accept_rates
