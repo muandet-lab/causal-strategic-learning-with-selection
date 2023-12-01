@@ -6,11 +6,16 @@
 
 
 
-To instantiate the project environment:
+To instantiate the project environment, with conda:
 ```
 conda create -n csl python=3.7
 conda activate csl
 python -m pip install -U -r requirements.txt
+```
+
+Or with Docker:
+```
+bash docker-env/launch.sh nb
 ```
 
 To reproduce the experiments, please run `experiments.ipynb`
