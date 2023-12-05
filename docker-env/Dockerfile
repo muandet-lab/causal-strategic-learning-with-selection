@@ -10,5 +10,5 @@ RUN pip install -r requirements.txt
 RUN pip install notebook
 
 # To be run with bind mounts
-
-ENV PYTHONPATH=.
+# See launch.sh for the code directory
+ENV PYTHONPATH=/home/guest/csl-code
