@@ -53,7 +53,7 @@ def get_args(cmd):
         "--alpha",
         default=0,
         type=float,
-        help="convex combination for deciding clipping thres.",
+        help="convex combination parameter for determining trade-off between linearity and non-linearity.",
     )
     parser.add_argument(
         "--alpha-effort",

@@ -16,7 +16,36 @@ from sklearn.preprocessing import normalize as skl_normalize
 from py.utils import normalize
 
 
-def clip_covariates(x_tr: np.ndarray, alpha: float = 0) -> np.ndarray:
+def _delinearize(x_org: np.ndarray, min_vals: np.ndarray, max_vals: np.ndarray):
+    assert x_org.ndim == 2 and min_vals.ndim == 2 and max_vals.ndim == 2
+    assert min_vals.shape == (1, x_org.shape[-1])
+    assert max_vals.shape == (1, x_org.shape[-1])
+
+    # some helper function definitions.
+    normalize = (
+        lambda x, curr_min, curr_max, new_min, new_max: (
+            ((x - curr_min) / (curr_max - curr_min)) * (new_max - new_min)
+        )
+        + new_min
+    )
+    sigmoid = lambda x: 1.0 / (1 + np.exp(-x))
+
+    # normalize -> sigmoid -> normalize back.
+    x = normalize(x_org, min_vals, max_vals, -5, +5)
+    sigmoid_x = sigmoid(x)
+    sigmoid_x_org = normalize(sigmoid_x, 0, 1, min_vals, max_vals)
+    return sigmoid_x_org
+
+
+def delinearize(
+    x_tr: np.ndarray, alpha: float, min_vals: np.ndarray, max_vals: np.ndarray
+):
+    sigmoid_x_tr = _delinearize(x_tr, min_vals, max_vals)
+    x_tr_nonlin = (1 - alpha) * x_tr + (alpha) * sigmoid_x_tr
+    return x_tr_nonlin
+
+
+def clip_covariates(x_tr: np.ndarray) -> np.ndarray:
     """
     This works for both base covariates (i.e., b) and improved covariates (i.e., X).
 
@@ -28,23 +57,13 @@ def clip_covariates(x_tr: np.ndarray, alpha: float = 0) -> np.ndarray:
     """
     x_tr = copy.deepcopy(x_tr)
 
-    x_tr[:, 0] = np.clip(
-        x_tr[:, 0],
-        alpha * 400 + (1 - alpha) * x_tr[:, 0].min(),
-        alpha * 1600 + (1 - alpha) * x_tr[:, 0].max(),
-    )  # clip to 400 to 1600
-    x_tr[:, 1] = np.clip(
-        x_tr[:, 1],
-        alpha * 0 + (1 - alpha) * x_tr[:, 1].min(),
-        4 * alpha + (1 - alpha) * x_tr[:, 1].max(),
-    )  # clip to 0 to 4.0
+    x_tr[:, 0] = np.clip(x_tr[:, 0], 400, 1600)  # clip to 400 to 1600
+    x_tr[:, 1] = np.clip(x_tr[:, 1], 0, 4)  # clip to 0 to 4.0
     return x_tr
 
 
-def clip_outcomes(y: np.ndarray, alpha: float = 0):
-    return np.clip(
-        y, 0 * alpha + (1 - alpha) * y.min(), 4 * alpha + (1 - alpha) * y.max()
-    )  # GPA
+def clip_outcomes(y: np.ndarray):
+    return np.clip(y, 0, 4)  # GPA
 
 
 def normalise_agents(
