@@ -110,7 +110,7 @@ def run_simulator(
 
     Args:
         applicants_per_round (int): number of applicants
-        fixed_effort_conversion (bool): whether to fix each student
+        fixed_effort_conversion (bool): whether to share effort conversion matrix across students
         args (argparse.Namespace): namespace object from algos.py
         theta_star (np.ndarray): (n, m) matrix. ground truth causal coefficient of
         environments.
@@ -122,6 +122,8 @@ def run_simulator(
         does_clip=args.clip,
         does_normalise=args.normalize,
         ranking_type=args.rank_type,
+        alpha=args.alpha,
+        alpha_effort=args.alpha_effort
     )
     sim.deploy(
         thetas_tr=theta, gammas=args.pref_vect, admission_rates=args.envs_accept_rates
@@ -157,3 +159,6 @@ def run_simulator(
     disadv_idx = np.where(u == False)
     adv_idx, disadv_idx = adv_idx[0], disadv_idx[0]
     return theta, b_tr, x_tr, eet_mean, o, y, y_hat, w, z, adv_idx, disadv_idx
+
+
+# %%

@@ -50,6 +50,18 @@ def get_args(cmd):
         "--clip", action="store_true", help="clip, as in Harris. et al settings."
     )
     parser.add_argument(
+        "--alpha",
+        default=0,
+        type=float,
+        help="convex combination parameter for determining trade-off between linearity and non-linearity.",
+    )
+    parser.add_argument(
+        "--alpha-effort",
+        default=1,
+        type=float,
+        help="convex combination for deciding mean and variance of added noise effort conversion matrix.",
+    )
+    parser.add_argument(
         "--normalize",
         action="store_true",
         help="normalise features to retain real-world interpretation",

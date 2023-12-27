@@ -2,7 +2,12 @@ from typing import Iterable
 
 import numpy as np
 
-from py.agents_gen import clip_covariates, normalise_agents, DEFAULT_AGENTS_MODEL
+from py.agents_gen import (
+    clip_covariates,
+    normalise_agents,
+    DEFAULT_AGENTS_MODEL,
+    delinearize,
+)
 from py.agents_gen import (
     clip_outcomes,
     evaluate_agents,
@@ -147,12 +152,15 @@ class Simulator:
         does_normalise: bool,
         ranking_type: str,
         agents_model: AgentsGenericModel = DEFAULT_AGENTS_MODEL,
+        alpha: float = 0,
+        alpha_effort: float = 1,
     ):
-
         self._num_agents = num_agents  # per round
         self._has_same_effort = has_same_effort
         self._does_clip = does_clip
         self._does_normalise = does_normalise
+        self.alpha = alpha
+        self.alpha_effort = alpha_effort
 
         self._agents_model = agents_model
 
@@ -206,9 +214,12 @@ class Simulator:
 
         # agents are spawned
         u, b_tr, e_stack = am.gen_base_agents(
-            length=(T * s), has_same_effort=has_same_effort
+            length=(T * s),
+            has_same_effort=has_same_effort,
+            alpha_effort=self.alpha_effort,
         )
         b_tr = clip_covariates(b_tr) if does_clip else b_tr
+        b_tr = delinearize(b_tr, self.alpha, min_vals=np.array([[400, 0]]), max_vals=np.array([[1600, 4]]))
 
         # compute average thetas
         # (n,) and (n,T,m) -> (T,m)
@@ -227,10 +238,12 @@ class Simulator:
         # agents take strategic actions
         x_tr = am.gen_covariates(b_tr=b_tr, e_stack=e_stack, avg_theta_tr=avg_theta_tr)
         x_tr = clip_covariates(x_tr) if does_clip else x_tr
+        x_tr = delinearize(x_tr, self.alpha, min_vals=np.array([[400, 0]]), max_vals=np.array([[1600, 4]]))
 
-        # normalise agents' data
         e_mean = e_stack.mean(axis=0)
         eet_mean = e_mean.dot(e_mean.T)
+
+        # normalise agents' data
         if does_normalise:
             b_tr, x_tr, eet_mean = normalise_agents(
                 b_tr=b_tr, x_tr=x_tr, eet_mean=eet_mean
@@ -280,14 +293,12 @@ class Simulator:
         theta_stars_tr = np.array(theta_stars_tr)
 
         # init params
-        u = self.u
-        x_tr = self.x_tr
-        does_clip = self._does_clip
         am = self._agents_model
 
         # start here
-        o, y = am.gen_outcomes(u=u, x_tr=x_tr, theta_stars_tr=theta_stars_tr)
-        y = clip_outcomes(y) if does_clip else y
+        o, y = am.gen_outcomes(u=self.u, x_tr=self.x_tr, theta_stars_tr=theta_stars_tr)
+        y = clip_outcomes(y) if self._does_clip else y
+        y = delinearize(y, self.alpha, min_vals=np.array([[0]]), max_vals=np.array([[4]]))
 
         # assignment
         self.o = o

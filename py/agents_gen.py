@@ -16,6 +16,35 @@ from sklearn.preprocessing import normalize as skl_normalize
 from py.utils import normalize
 
 
+def _delinearize(x_org: np.ndarray, min_vals: np.ndarray, max_vals: np.ndarray):
+    assert x_org.ndim == 2 and min_vals.ndim == 2 and max_vals.ndim == 2
+    assert min_vals.shape == (1, x_org.shape[-1])
+    assert max_vals.shape == (1, x_org.shape[-1])
+
+    # some helper function definitions.
+    normalize = (
+        lambda x, curr_min, curr_max, new_min, new_max: (
+            ((x - curr_min) / (curr_max - curr_min)) * (new_max - new_min)
+        )
+        + new_min
+    )
+    sigmoid = lambda x: 1.0 / (1 + np.exp(-x))
+
+    # normalize -> sigmoid -> normalize back.
+    x = normalize(x_org, min_vals, max_vals, -5, +5)
+    sigmoid_x = sigmoid(x)
+    sigmoid_x_org = normalize(sigmoid_x, 0, 1, min_vals, max_vals)
+    return sigmoid_x_org
+
+
+def delinearize(
+    x_tr: np.ndarray, alpha: float, min_vals: np.ndarray, max_vals: np.ndarray
+):
+    sigmoid_x_tr = _delinearize(x_tr, min_vals, max_vals)
+    x_tr_nonlin = (1 - alpha) * x_tr + (alpha) * sigmoid_x_tr
+    return x_tr_nonlin
+
+
 def clip_covariates(x_tr: np.ndarray) -> np.ndarray:
     """
     This works for both base covariates (i.e., b) and improved covariates (i.e., X).
@@ -27,6 +56,7 @@ def clip_covariates(x_tr: np.ndarray) -> np.ndarray:
       np.ndarray: a (T,m) matrix of clipped covariates.
     """
     x_tr = copy.deepcopy(x_tr)
+
     x_tr[:, 0] = np.clip(x_tr[:, 0], 400, 1600)  # clip to 400 to 1600
     x_tr[:, 1] = np.clip(x_tr[:, 1], 0, 4)  # clip to 0 to 4.0
     return x_tr
@@ -143,7 +173,6 @@ class AgentsGenericModel:
         group_1_outcome_mean_shift: float,
         group_1_outcome_std: float,
     ):
-
         # np.random.multivariate_normal
         self.b_dis_0 = {"mean": group_0_base_mean, "cov": group_0_base_cov}
         self.b_dis_1 = {"mean": group_1_base_mean, "cov": group_1_base_cov}
@@ -155,7 +184,7 @@ class AgentsGenericModel:
         return
 
     def gen_base_agents(
-        self, length: int, has_same_effort: bool
+        self, length: int, has_same_effort: bool, alpha_effort: float = 1
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Args:
@@ -183,8 +212,16 @@ class AgentsGenericModel:
         bottom_noise = np.zeros(T)
         if not has_same_effort:
             multipliers = (u - 0.5) * 2
-            top_noise = multipliers * np.random.normal(loc=0.5, scale=0.5, size=T)
-            bottom_noise = multipliers * np.random.normal(loc=0.1, scale=0.1, size=T)
+            top_noise = multipliers * np.random.normal(
+                loc=alpha_effort * 0.5 + (1 - alpha_effort) * 0,
+                scale=alpha_effort * 0.5 + (1 - alpha_effort) * 0,
+                size=T,
+            )
+            bottom_noise = multipliers * np.random.normal(
+                loc=alpha_effort * 0.1 + (1 - alpha_effort) * 0,
+                scale=alpha_effort * 0.1 + (1 - alpha_effort) * 0,
+                size=T,
+            )
 
         e_stack = np.tile([[10.0, 0], [0, 1.0]], reps=(T, 1, 1))
         e_stack[:, 0, 0] += top_noise
@@ -293,9 +330,9 @@ class AgentsGenericModel:
 
 DEFAULT_AGENTS_MODEL = AgentsGenericModel(
     group_0_base_mean=[800, 1.8],
-    group_0_base_cov=[[200 ** 2, 0], [0, 0.5 ** 2]],
+    group_0_base_cov=[[200**2, 0], [0, 0.5**2]],
     group_1_base_mean=[1000, 2.25],
-    group_1_base_cov=[[200 ** 2, 0], [0, 0.5 ** 2]],
+    group_1_base_cov=[[200**2, 0], [0, 0.5**2]],
     group_0_outcome_mean_shift=0.5,
     group_0_outcome_std=0.2,
     group_1_outcome_mean_shift=1.5,
